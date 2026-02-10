@@ -221,17 +221,30 @@ describe("Ivy", () => {
   });
 
   describe("handler context", () => {
-    it("should pass request to context", async () => {
+    it("should pass raw request to context", async () => {
       const app = new Ivy();
 
       app.get("/test", (c) => {
-        return c.text(c.req.url);
+        return c.text(c.req.raw.url);
       });
 
       const req = new Request("http://localhost/test", { method: "GET" });
       const response = await app.fetch(req);
 
       expect(await response.text()).toBe("http://localhost/test");
+    });
+
+    it("should provide access to raw request properties", async () => {
+      const app = new Ivy();
+
+      app.get("/method", (c) => {
+        return c.text(c.req.raw.method);
+      });
+
+      const req = new Request("http://localhost/method", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(await response.text()).toBe("GET");
     });
 
     it("should support JSON responses", async () => {
@@ -272,6 +285,168 @@ describe("Ivy", () => {
       const response = await app.fetch(req);
 
       expect(await response.text()).toBe("Async response");
+    });
+  });
+
+  describe("wildcard paths", () => {
+    it("should match wildcard in middle of path", async () => {
+      const app = new Ivy();
+
+      app.get("/wild/*/card", (c) => c.text("GET /wild/*/card"));
+
+      const req = new Request("http://localhost/wild/anything/card", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("GET /wild/*/card");
+    });
+
+    it("should match wildcard with different values", async () => {
+      const app = new Ivy();
+
+      app.get("/files/*/download", (c) => c.text("Download"));
+
+      const req1 = new Request("http://localhost/files/123/download", { method: "GET" });
+      const res1 = await app.fetch(req1);
+      expect(await res1.text()).toBe("Download");
+
+      const req2 = new Request("http://localhost/files/abc/download", { method: "GET" });
+      const res2 = await app.fetch(req2);
+      expect(await res2.text()).toBe("Download");
+    });
+
+    it("should match multiple wildcards", async () => {
+      const app = new Ivy();
+
+      app.get("/api/*/users/*/profile", (c) => c.text("Profile"));
+
+      const req = new Request("http://localhost/api/v1/users/123/profile", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("Profile");
+    });
+
+    it("should not match incorrect wildcard paths", async () => {
+      const app = new Ivy();
+
+      app.get("/wild/*/card", (c) => c.text("Match"));
+
+      const req = new Request("http://localhost/wild/card", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe("path params", () => {
+    it("should extract single path param", async () => {
+      const app = new Ivy();
+
+      app.get("/user/:name", (c) => {
+        const name = c.req.param("name");
+        return c.text(`Hello ${name}`);
+      });
+
+      const req = new Request("http://localhost/user/john", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("Hello john");
+    });
+
+    it("should extract multiple path params", async () => {
+      const app = new Ivy();
+
+      app.get("/users/:userId/posts/:postId", (c) => {
+        const userId = c.req.param("userId");
+        const postId = c.req.param("postId");
+        return c.json({ userId, postId });
+      });
+
+      const req = new Request("http://localhost/users/123/posts/456", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ userId: "123", postId: "456" });
+    });
+
+    it("should handle params with different values", async () => {
+      const app = new Ivy();
+
+      app.get("/product/:id", (c) => {
+        const id = c.req.param("id");
+        return c.text(`Product ${id}`);
+      });
+
+      const req1 = new Request("http://localhost/product/abc", { method: "GET" });
+      const res1 = await app.fetch(req1);
+      expect(await res1.text()).toBe("Product abc");
+
+      const req2 = new Request("http://localhost/product/123", { method: "GET" });
+      const res2 = await app.fetch(req2);
+      expect(await res2.text()).toBe("Product 123");
+    });
+
+    it("should return undefined for non-existent param", async () => {
+      const app = new Ivy();
+
+      app.get("/test/:id", (c) => {
+        const nonExistent = c.req.param("name");
+        return c.text(nonExistent === undefined ? "undefined" : nonExistent);
+      });
+
+      const req = new Request("http://localhost/test/123", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(await response.text()).toBe("undefined");
+    });
+
+    it("should work with POST requests", async () => {
+      const app = new Ivy();
+
+      app.post("/api/:version/users", (c) => {
+        const version = c.req.param("version");
+        return c.json({ version, action: "create" });
+      });
+
+      const req = new Request("http://localhost/api/v2/users", { method: "POST" });
+      const response = await app.fetch(req);
+
+      expect(await response.json()).toEqual({ version: "v2", action: "create" });
+    });
+
+    it("should combine with .on() method", async () => {
+      const app = new Ivy();
+
+      app.on(["GET", "POST"], "/resource/:id", (c) => {
+        const id = c.req.param("id");
+        return c.text(`Resource ${id}`);
+      });
+
+      const getReq = new Request("http://localhost/resource/123", { method: "GET" });
+      const getRes = await app.fetch(getReq);
+      expect(await getRes.text()).toBe("Resource 123");
+
+      const postReq = new Request("http://localhost/resource/456", { method: "POST" });
+      const postRes = await app.fetch(postReq);
+      expect(await postRes.text()).toBe("Resource 456");
+    });
+
+    it("should allow accessing params via req.params object", async () => {
+      const app = new Ivy();
+
+      app.get("/user/:id/profile/:section", (c) => {
+        return c.json({
+          id: c.req.params.id,
+          section: c.req.params.section,
+        });
+      });
+
+      const req = new Request("http://localhost/user/456/profile/settings", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(await response.json()).toEqual({ id: "456", section: "settings" });
     });
   });
 });

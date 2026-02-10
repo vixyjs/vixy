@@ -1,8 +1,16 @@
 export class Context {
-  req: Request;
+  req: {
+    raw: Request;
+    param: (name: string) => string | undefined;
+    params: Record<string, string>;
+  };
 
-  constructor(req: Request) {
-    this.req = req;
+  constructor(rawRequest: Request, params: Record<string, string> = {}) {
+    this.req = {
+      raw: rawRequest,
+      params: params,
+      param: (name: string) => params[name],
+    };
   }
 
   text(content: string, status = 200): Response {

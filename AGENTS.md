@@ -211,5 +211,3 @@ Current TODOs in the codebase (do not implement unless requested):
 - Route groups/prefixes
 - Request body parsers (json, form, text, arrayBuffer, blob)
 - Body validators
-- Headers helper
-- Cookies helper

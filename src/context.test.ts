@@ -289,10 +289,14 @@ describe("Context", () => {
 
   describe("req.href", () => {
     it("should provide full URL including query parameters", () => {
-      const req = new Request("http://localhost:8787/users/123?auto=true&format=json");
+      const req = new Request(
+        "http://localhost:8787/users/123?auto=true&format=json",
+      );
       const ctx = new Context(req);
 
-      expect(ctx.req.href).toBe("http://localhost:8787/users/123?auto=true&format=json");
+      expect(ctx.req.href).toBe(
+        "http://localhost:8787/users/123?auto=true&format=json",
+      );
     });
 
     it("should work with URL without query parameters", () => {
@@ -353,6 +357,114 @@ describe("Context", () => {
       const ctx = new Context(req, {}, "/about");
 
       expect(ctx.req.routePathname).toBe("/about");
+    });
+  });
+
+  describe("req.cookie()", () => {
+    it("should return specific cookie value", () => {
+      const req = new Request("http://localhost/", {
+        headers: { Cookie: "session=abc123; theme=dark" },
+      });
+      const ctx = new Context(req);
+
+      expect(ctx.req.cookie("session")).toBe("abc123");
+      expect(ctx.req.cookie("theme")).toBe("dark");
+    });
+
+    it("should return undefined for non-existent cookie", () => {
+      const req = new Request("http://localhost/", {
+        headers: { Cookie: "session=abc123" },
+      });
+      const ctx = new Context(req);
+
+      expect(ctx.req.cookie("nonExistent")).toBeUndefined();
+    });
+
+    it("should return all cookies when called without arguments", () => {
+      const req = new Request("http://localhost/", {
+        headers: { Cookie: "session=abc123; theme=dark; lang=en" },
+      });
+      const ctx = new Context(req);
+
+      const allCookies = ctx.req.cookie();
+      expect(allCookies).toEqual({
+        session: "abc123",
+        theme: "dark",
+        lang: "en",
+      });
+    });
+
+    it("should return empty object when no cookies", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new Context(req);
+
+      const allCookies = ctx.req.cookie();
+      expect(allCookies).toEqual({});
+    });
+
+    it("should handle cookies with spaces around equals sign", () => {
+      const req = new Request("http://localhost/", {
+        headers: { Cookie: "key1 = value1; key2= value2 ;key3 =value3" },
+      });
+      const ctx = new Context(req);
+
+      expect(ctx.req.cookie("key1")).toBe("value1");
+      expect(ctx.req.cookie("key2")).toBe("value2");
+      expect(ctx.req.cookie("key3")).toBe("value3");
+    });
+
+    it("should handle cookies with special characters in values", () => {
+      const req = new Request("http://localhost/", {
+        headers: { Cookie: "data=hello%20world; token=Bearer%20abc123" },
+      });
+      const ctx = new Context(req);
+
+      expect(ctx.req.cookie("data")).toBe("hello%20world");
+      expect(ctx.req.cookie("token")).toBe("Bearer%20abc123");
+    });
+
+    it("should handle single cookie", () => {
+      const req = new Request("http://localhost/", {
+        headers: { Cookie: "session=abc123" },
+      });
+      const ctx = new Context(req);
+
+      expect(ctx.req.cookie("session")).toBe("abc123");
+      expect(ctx.req.cookie()).toEqual({ session: "abc123" });
+    });
+
+    it("should ignore malformed cookies without equals sign", () => {
+      const req = new Request("http://localhost/", {
+        headers: { Cookie: "validCookie=value; malformedCookie; another=test" },
+      });
+      const ctx = new Context(req);
+
+      const allCookies = ctx.req.cookie();
+      expect(allCookies).toEqual({
+        validCookie: "value",
+        another: "test",
+      });
+      expect(ctx.req.cookie("malformedCookie")).toBeUndefined();
+    });
+
+    it("should handle empty cookie values", () => {
+      const req = new Request("http://localhost/", {
+        headers: { Cookie: "empty=; session=abc123" },
+      });
+      const ctx = new Context(req);
+
+      expect(ctx.req.cookie("empty")).toBe("");
+      expect(ctx.req.cookie("session")).toBe("abc123");
+    });
+
+    it("should handle cookies with only whitespace separators", () => {
+      const req = new Request("http://localhost/", {
+        headers: { Cookie: "   key1=value1  ;  key2=value2   " },
+      });
+      const ctx = new Context(req);
+
+      expect(ctx.req.cookie("key1")).toBe("value1");
+      expect(ctx.req.cookie("key2")).toBe("value2");
     });
   });
 });

@@ -37,8 +37,6 @@ export default class Ivy {
   }
 
   // TODO:
-  // - onNotFound
-  // - onError
   // - `strict` mode for route matching (trailing slashes) like hono?
   // - middleware support
   // - route groups / prefixes

@@ -4,7 +4,7 @@ This document provides coding agents with essential information about the Ivy co
 
 ## Project Overview
 
-Ivy is a lightweight web framework for Bun runtime, built with TypeScript. It provides a simple, Express-like API for routing HTTP requests with support for path parameters, query parameters, wildcards, and multiple HTTP methods.
+Ivy is a lightweight but complete web framework for Bun runtime, built with TypeScript. It provides a simple, Express-like API for routing HTTP requests with support for path parameters, query parameters, wildcards, and multiple HTTP methods.
 
 ## Build & Test Commands
 
@@ -200,14 +200,3 @@ c.html("<h1>Title</h1>", 200);
 - Separates raw request access via `c.req.raw`
 - Provides dedicated methods for params, query strings, etc.
 - Immutable design - create new responses rather than modifying context
-
-## Future Considerations
-
-Current TODOs in the codebase (do not implement unless requested):
-- `onNotFound` hook
-- `onError` hook  
-- Strict mode for trailing slash handling
-- Middleware support
-- Route groups/prefixes
-- Request body parsers (json, form, text, arrayBuffer, blob)
-- Body validators

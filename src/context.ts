@@ -12,6 +12,11 @@ export interface IvyRequest {
     (): Record<string, string>;
     (name: string): string | undefined;
   };
+  json: () => Promise<any>;
+  text: () => Promise<string>;
+  formData: () => Promise<FormData>;
+  arrayBuffer: () => Promise<ArrayBuffer>;
+  blob: () => Promise<Blob>;
   href: string;
   pathname: string;
   routePathname: string;
@@ -19,14 +24,9 @@ export interface IvyRequest {
 
 export class Context {
   // TODO:
-  // - body parsers:
-  //   * json
-  //   * form
-  //   * text
-  //   * arrayBuffer
-  //   * blob
   // - body validators (blocked by middleware implementation)
   req: IvyRequest;
+  private bodyCache: ArrayBuffer | null = null;
 
   constructor(
     rawRequest: Request,
@@ -97,6 +97,14 @@ export class Context {
       (name: string): string | undefined;
     };
 
+    // Cache the body to prevent "Body already used" errors
+    const getBodyCache = async (): Promise<ArrayBuffer> => {
+      if (this.bodyCache === null) {
+        this.bodyCache = await rawRequest.arrayBuffer();
+      }
+      return this.bodyCache;
+    };
+
     this.req = {
       raw: rawRequest,
       params: params,
@@ -108,6 +116,31 @@ export class Context {
       },
       header: (name: string) => rawRequest.headers.get(name) ?? undefined,
       cookie: cookieFn,
+      json: async () => {
+        const buffer = await getBodyCache();
+        const text = new TextDecoder().decode(buffer);
+        return JSON.parse(text);
+      },
+      text: async () => {
+        const buffer = await getBodyCache();
+        return new TextDecoder().decode(buffer);
+      },
+      formData: async () => {
+        const buffer = await getBodyCache();
+        const blob = new Blob([buffer]);
+        const contentType = rawRequest.headers.get("Content-Type") ?? "";
+        const response = new Response(blob, {
+          headers: { "Content-Type": contentType },
+        });
+        return response.formData();
+      },
+      arrayBuffer: async () => {
+        return getBodyCache();
+      },
+      blob: async () => {
+        const buffer = await getBodyCache();
+        return new Blob([buffer]);
+      },
       href: rawRequest.url,
       pathname: url.pathname,
       routePathname: routePathname,

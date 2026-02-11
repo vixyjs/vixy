@@ -591,7 +591,9 @@ describe("Ivy", () => {
         return c.json({ pathname: c.req.pathname });
       });
 
-      const req = new Request("http://localhost/users/123?auto=true", { method: "GET" });
+      const req = new Request("http://localhost/users/123?auto=true", {
+        method: "GET",
+      });
       const response = await app.fetch(req);
 
       expect(await response.json()).toEqual({ pathname: "/users/123" });
@@ -604,10 +606,14 @@ describe("Ivy", () => {
         return c.json({ href: c.req.href });
       });
 
-      const req = new Request("http://localhost:8787/test?foo=bar", { method: "GET" });
+      const req = new Request("http://localhost:8787/test?foo=bar", {
+        method: "GET",
+      });
       const response = await app.fetch(req);
 
-      expect(await response.json()).toEqual({ href: "http://localhost:8787/test?foo=bar" });
+      expect(await response.json()).toEqual({
+        href: "http://localhost:8787/test?foo=bar",
+      });
     });
 
     it("should provide req.routePathname with defined route pattern", async () => {
@@ -621,7 +627,9 @@ describe("Ivy", () => {
         });
       });
 
-      const req = new Request("http://localhost/users/1232?auto=true", { method: "GET" });
+      const req = new Request("http://localhost/users/1232?auto=true", {
+        method: "GET",
+      });
       const response = await app.fetch(req);
 
       expect(await response.json()).toEqual({
@@ -641,7 +649,9 @@ describe("Ivy", () => {
         });
       });
 
-      const req = new Request("http://localhost/files/abc123/download", { method: "GET" });
+      const req = new Request("http://localhost/files/abc123/download", {
+        method: "GET",
+      });
       const response = await app.fetch(req);
 
       expect(await response.json()).toEqual({
@@ -664,7 +674,10 @@ describe("Ivy", () => {
         });
       });
 
-      const req = new Request("http://localhost:8787/api/v2/users/1232?format=json", { method: "GET" });
+      const req = new Request(
+        "http://localhost:8787/api/v2/users/1232?format=json",
+        { method: "GET" },
+      );
       const response = await app.fetch(req);
 
       expect(await response.json()).toEqual({
@@ -675,6 +688,200 @@ describe("Ivy", () => {
         id: "1232",
         format: "json",
       });
+    });
+  });
+
+  describe("request body parsers", () => {
+    it("should parse JSON body with req.json()", async () => {
+      const app = new Ivy();
+
+      app.post("/api/data", async (c) => {
+        const body = await c.req.json();
+        return c.json({ received: body });
+      });
+
+      const req = new Request("http://localhost/api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "John", age: 30 }),
+      });
+      const response = await app.fetch(req);
+
+      expect(await response.json()).toEqual({
+        received: { name: "John", age: 30 },
+      });
+    });
+
+    it("should parse text body with req.text()", async () => {
+      const app = new Ivy();
+
+      app.post("/api/echo", async (c) => {
+        const body = await c.req.text();
+        return c.text(`Received: ${body}`);
+      });
+
+      const req = new Request("http://localhost/api/echo", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: "Hello, World!",
+      });
+      const response = await app.fetch(req);
+
+      expect(await response.text()).toBe("Received: Hello, World!");
+    });
+
+    it("should parse form data with req.formData()", async () => {
+      const app = new Ivy();
+
+      app.post("/api/form", async (c) => {
+        const formData = await c.req.formData();
+        const name = formData.get("name");
+        const email = formData.get("email");
+        return c.json({ name, email });
+      });
+
+      const formData = new FormData();
+      formData.append("name", "Alice");
+      formData.append("email", "alice@example.com");
+
+      const req = new Request("http://localhost/api/form", {
+        method: "POST",
+        body: formData,
+      });
+      const response = await app.fetch(req);
+
+      expect(await response.json()).toEqual({
+        name: "Alice",
+        email: "alice@example.com",
+      });
+    });
+
+    it("should parse array buffer with req.arrayBuffer()", async () => {
+      const app = new Ivy();
+
+      app.post("/api/binary", async (c) => {
+        const buffer = await c.req.arrayBuffer();
+        return c.json({ byteLength: buffer.byteLength });
+      });
+
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
+      const req = new Request("http://localhost/api/binary", {
+        method: "POST",
+        body: data,
+      });
+      const response = await app.fetch(req);
+
+      expect(await response.json()).toEqual({ byteLength: 5 });
+    });
+
+    it("should parse blob with req.blob()", async () => {
+      const app = new Ivy();
+
+      app.post("/api/blob", async (c) => {
+        const blob = await c.req.blob();
+        return c.json({ size: blob.size });
+      });
+
+      const blob = new Blob(["test content"], { type: "text/plain" });
+      const req = new Request("http://localhost/api/blob", {
+        method: "POST",
+        body: blob,
+      });
+      const response = await app.fetch(req);
+
+      expect(await response.json()).toEqual({
+        size: 12,
+      });
+    });
+
+    it("should allow multiple body parser calls without 'Body already used' error", async () => {
+      const app = new Ivy();
+
+      app.post("/api/multi", async (c) => {
+        const text1 = await c.req.text();
+        const text2 = await c.req.text();
+        return c.json({ text1, text2, same: text1 === text2 });
+      });
+
+      const req = new Request("http://localhost/api/multi", {
+        method: "POST",
+        body: "test data",
+      });
+      const response = await app.fetch(req);
+
+      expect(await response.json()).toEqual({
+        text1: "test data",
+        text2: "test data",
+        same: true,
+      });
+    });
+
+    it("should allow accessing raw request after using body parser", async () => {
+      const app = new Ivy();
+
+      app.post("/api/test", async (c) => {
+        const body = await c.req.json();
+        const method = c.req.raw.method;
+        return c.json({ body, method });
+      });
+
+      const req = new Request("http://localhost/api/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test: true }),
+      });
+      const response = await app.fetch(req);
+
+      expect(await response.json()).toEqual({
+        body: { test: true },
+        method: "POST",
+      });
+    });
+
+    it("should cache body and allow different parser methods", async () => {
+      const app = new Ivy();
+
+      app.post("/api/mixed", async (c) => {
+        const json = await c.req.json();
+        const text = await c.req.text();
+        const buffer = await c.req.arrayBuffer();
+        return c.json({
+          json,
+          textLength: text.length,
+          bufferLength: buffer.byteLength,
+        });
+      });
+
+      const payload = { value: 42 };
+      const body = JSON.stringify(payload);
+      const req = new Request("http://localhost/api/mixed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: body,
+      });
+      const response = await app.fetch(req);
+
+      const result = await response.json();
+      expect(result.json).toEqual({ value: 42 });
+      expect(result.textLength).toBe(body.length);
+      expect(result.bufferLength).toBe(body.length);
+    });
+
+    it("should handle empty body", async () => {
+      const app = new Ivy();
+
+      app.post("/api/empty", async (c) => {
+        const text = await c.req.text();
+        return c.json({ isEmpty: text === "", length: text.length });
+      });
+
+      const req = new Request("http://localhost/api/empty", {
+        method: "POST",
+        body: "",
+      });
+      const response = await app.fetch(req);
+
+      expect(await response.json()).toEqual({ isEmpty: true, length: 0 });
     });
   });
 

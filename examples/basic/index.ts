@@ -33,9 +33,9 @@ app.get("/posts/:postId/comments/:commentId", (c) => {
   });
 });
 
-// POST route
+// POST route with JSON body parser
 app.post("/users", async (c) => {
-  const body = await c.req.raw.json();
+  const body = await c.req.json();
   return c.json(
     {
       message: "User created",
@@ -43,6 +43,51 @@ app.post("/users", async (c) => {
     },
     201,
   );
+});
+
+// Text body parser
+app.post("/echo", async (c) => {
+  const text = await c.req.text();
+  return c.text(`You sent: ${text}`);
+});
+
+// Form data body parser
+app.post("/contact", async (c) => {
+  const formData = await c.req.formData();
+  const name = formData.get("name");
+  const email = formData.get("email");
+  const message = formData.get("message");
+
+  return c.json({
+    message: "Contact form received",
+    data: { name, email, message },
+  });
+});
+
+// Binary data body parser
+app.post("/upload", async (c) => {
+  const buffer = await c.req.arrayBuffer();
+  const blob = await c.req.blob();
+
+  return c.json({
+    message: "File uploaded",
+    size: buffer.byteLength,
+    blobSize: blob.size,
+  });
+});
+
+// Multiple body parser calls - demonstrating caching
+app.post("/analyze", async (c) => {
+  // You can call multiple body parsers without "Body already used" error
+  const json = await c.req.json();
+  const text = await c.req.text();
+  const buffer = await c.req.arrayBuffer();
+
+  return c.json({
+    parsedData: json,
+    rawTextLength: text.length,
+    bufferSize: buffer.byteLength,
+  });
 });
 
 // HTML response
@@ -119,6 +164,32 @@ app.get("/api/:version/info", (c) => {
     routePathname: c.req.routePathname,
     version: c.req.param("version"),
     allQueryParams: c.req.query(),
+  });
+});
+
+// Request headers example
+app.get("/headers", (c) => {
+  const userAgent = c.req.header("User-Agent");
+  const accept = c.req.header("Accept");
+  const authorization = c.req.header("Authorization");
+
+  return c.json({
+    userAgent,
+    accept,
+    authorization: authorization ? "Present" : "Missing",
+  });
+});
+
+// Cookies example
+app.get("/profile", (c) => {
+  const sessionId = c.req.cookie("session_id");
+  const userId = c.req.cookie("user_id");
+  const allCookies = c.req.cookie();
+
+  return c.json({
+    sessionId,
+    userId,
+    cookieCount: Object.keys(allCookies).length,
   });
 });
 

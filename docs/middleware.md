@@ -14,12 +14,11 @@ import Ivy from "ivy";
 
 const app = new Ivy();
 
-app.use(async (c, next) => {
+app.use("*", async (c, next) => {
   await next(); // Proceed to the next middleware or route handler
 });
 
-// or call .use multiple times
-app.use(async (c, next) => {
+app.use("/v1/*", async (c, next) => {
   // some process
   await next();
 });
@@ -39,7 +38,9 @@ app.get("/protected", authMiddleware, (c) => {
   return c.text("Protected content");
 });
 
-app.on("POST", "/protected", authMiddleware, (c) => c.res.text("POST response"));
+app.on("POST", "/protected", authMiddleware, (c) =>
+  c.res.text("POST response"),
+);
 ```
 
 in a route handler, you can have multiple middleware functions:
@@ -53,6 +54,46 @@ app.post("/submit", middleware1, middleware2, (c) => {
 ## Middleware Execution Order
 
 The execution order will be determined from the order they are defined, with global middleware running first, followed by route-specific middleware in the order they are provided.
+
+If there's multiple global middleware, they will execute in the order they were added using `app.use()`.
+
+```ts
+import Ivy from "../../src/index";
+
+const app = new Ivy();
+
+app.use("*", async (_, next) => {
+  console.log("middleware 1 start");
+  await next();
+  console.log("middleware 1 end");
+});
+app.use("*", async (_, next) => {
+  console.log("middleware 2 start");
+  await next();
+  console.log("middleware 2 end");
+});
+app.use("*", async (_, next) => {
+  console.log("middleware 3 start");
+  await next();
+  console.log("middleware 3 end");
+});
+
+app.get("/", (c) => {
+  console.log("handler");
+  return c.res.text("Hello!");
+});
+```
+
+will result:
+```
+middleware 1 start
+  middleware 2 start
+    middleware 3 start
+      handler
+    middleware 3 end
+  middleware 2 end
+middleware 1 end
+```
 
 ## Short-circuiting Middleware
 

@@ -46,7 +46,7 @@ The Ivy request lifecycle outlines the various stages a request goes through fro
 
 ```
 
-## Request/Reply Hooks 
+## Request/Reply Hooks
 
 Listed in the proper execution order
 
@@ -84,6 +84,7 @@ onPreParsing(c: IvyRequest, next: Next<T>) => void;
 ```ts
 onPreValidation(c: IvyRequest, next: Next) => void;
 ```
+
 - Invoked after body parsing but before validation
 - Can access request context and parsed request.body
 - Can modify request body (unvalidated body, since before validation occurs)
@@ -96,6 +97,7 @@ onPreValidation(c: IvyRequest, next: Next) => void;
 ```ts
 onPreHandler(c: IvyRequest, next: Next) => void;
 ```
+
 - Invoked after validation but before the route handler
 - Can access request context, fully parsed and validated request body
 - Can perform authentication, authorization, or data enrichment
@@ -108,6 +110,7 @@ onPreHandler(c: IvyRequest, next: Next) => void;
 ```ts
 onPreSerialization(c: IvyRequest, next: Next<T>) => void;
 ```
+
 - Invoked after route handler but before the response payload is serialized
 - Will NOT be invoked when the response data is: `string`, `Buffer`, `stream`, or `null`
   - because these types do not require serialization
@@ -121,6 +124,7 @@ onPreSerialization(c: IvyRequest, next: Next<T>) => void;
 ```ts
 onSend(c: IvyRequest, next: Next<T>) => void;
 ```
+
 - Invoked before the response is sent to the client and after serialization
 - Can access request context, and serialized response data
 - Can change response data before sent to client
@@ -132,6 +136,7 @@ onSend(c: IvyRequest, next: Next<T>) => void;
 ```ts
 onSend(c: IvyRequest, next: Next) => void;
 ```
+
 - Invoked after the response has been sent to the client
 - Can access request context and response data (read-only)
 - Cannot send more data to the client
@@ -143,9 +148,9 @@ onSend(c: IvyRequest, next: Next) => void;
 The `next` function is a callback provided to each hook to signal the continuation of the request lifecycle. It must be called to proceed to the next stage.
 
 Next function have 2 variations:
+
 - Without overrides payload: for hooks that cannot modify the request/response data
 - With overrides payload: for hooks that can modify the request/response data
-
 
 ```ts
 // without overrides payload

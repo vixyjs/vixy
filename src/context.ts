@@ -28,6 +28,12 @@ export interface IvyRequest {
 }
 
 export interface IvyResponse {
+  // TODO:
+  // - set headers
+  // - set cookies
+  // - send file/blob
+  // - redirect
+  // - send stream?
   json: (data: any, status?: ContentfulStatusCode) => Response;
   text: (content: string, status?: ContentfulStatusCode) => Response;
   html: (content: string, status?: ContentfulStatusCode) => Response;
@@ -143,7 +149,9 @@ export class IvyContext {
         const response = new Response(blob, {
           headers: { "Content-Type": contentType },
         });
-        return response.formData();
+        // Bun has native FormData support,
+        // so we ignore the undici deprecation warning
+        return response.formData() as Promise<FormData>;
       },
       arrayBuffer: async () => {
         return getBodyCache();

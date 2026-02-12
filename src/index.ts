@@ -136,41 +136,7 @@ export default class Ivy {
   on(
     methods: Method | Method[],
     paths: string | string[],
-    mw1: Middleware,
-    handler: Handler,
-  ): this;
-  on(
-    methods: Method | Method[],
-    paths: string | string[],
-    mw1: Middleware,
-    mw2: Middleware,
-    handler: Handler,
-  ): this;
-  on(
-    methods: Method | Method[],
-    paths: string | string[],
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    handler: Handler,
-  ): this;
-  on(
-    methods: Method | Method[],
-    paths: string | string[],
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    handler: Handler,
-  ): this;
-  on(
-    methods: Method | Method[],
-    paths: string | string[],
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    mw5: Middleware,
+    middleware: Middleware,
     handler: Handler,
   ): this;
   on(
@@ -192,42 +158,7 @@ export default class Ivy {
   }
 
   get(path: string, handler: Handler): this;
-  get(path: string, mw1: Middleware, handler: Handler): this;
-  get(path: string, mw1: Middleware, mw2: Middleware, handler: Handler): this;
-  get(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    handler: Handler,
-  ): this;
-  get(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    handler: Handler,
-  ): this;
-  get(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    mw5: Middleware,
-    handler: Handler,
-  ): this;
-  get(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    mw5: Middleware,
-    mw6: Middleware,
-    handler: Handler,
-  ): this;
+  get(path: string, middleware: Middleware, handler: Handler): this;
   get(path: string, ...handlers: (Handler | Middleware)[]): this {
     const { handler, middleware } = this.extractHandlerAndMiddleware(handlers);
     this.registerRoute("GET", path, middleware, handler);
@@ -235,32 +166,7 @@ export default class Ivy {
   }
 
   post(path: string, handler: Handler): this;
-  post(path: string, mw1: Middleware, handler: Handler): this;
-  post(path: string, mw1: Middleware, mw2: Middleware, handler: Handler): this;
-  post(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    handler: Handler,
-  ): this;
-  post(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    handler: Handler,
-  ): this;
-  post(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    mw5: Middleware,
-    handler: Handler,
-  ): this;
+  post(path: string, middleware: Middleware, handler: Handler): this;
   post(path: string, ...handlers: (Handler | Middleware)[]): this {
     const { handler, middleware } = this.extractHandlerAndMiddleware(handlers);
     this.registerRoute("POST", path, middleware, handler);
@@ -268,32 +174,7 @@ export default class Ivy {
   }
 
   put(path: string, handler: Handler): this;
-  put(path: string, mw1: Middleware, handler: Handler): this;
-  put(path: string, mw1: Middleware, mw2: Middleware, handler: Handler): this;
-  put(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    handler: Handler,
-  ): this;
-  put(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    handler: Handler,
-  ): this;
-  put(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    mw5: Middleware,
-    handler: Handler,
-  ): this;
+  put(path: string, middleware: Middleware, handler: Handler): this;
   put(path: string, ...handlers: (Handler | Middleware)[]): this {
     const { handler, middleware } = this.extractHandlerAndMiddleware(handlers);
     this.registerRoute("PUT", path, middleware, handler);
@@ -301,37 +182,7 @@ export default class Ivy {
   }
 
   delete(path: string, handler: Handler): this;
-  delete(path: string, mw1: Middleware, handler: Handler): this;
-  delete(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    handler: Handler,
-  ): this;
-  delete(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    handler: Handler,
-  ): this;
-  delete(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    handler: Handler,
-  ): this;
-  delete(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    mw5: Middleware,
-    handler: Handler,
-  ): this;
+  delete(path: string, middleware: Middleware, handler: Handler): this;
   delete(path: string, ...handlers: (Handler | Middleware)[]): this {
     const { handler, middleware } = this.extractHandlerAndMiddleware(handlers);
     this.registerRoute("DELETE", path, middleware, handler);
@@ -339,32 +190,7 @@ export default class Ivy {
   }
 
   patch(path: string, handler: Handler): this;
-  patch(path: string, mw1: Middleware, handler: Handler): this;
-  patch(path: string, mw1: Middleware, mw2: Middleware, handler: Handler): this;
-  patch(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    handler: Handler,
-  ): this;
-  patch(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    handler: Handler,
-  ): this;
-  patch(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    mw5: Middleware,
-    handler: Handler,
-  ): this;
+  patch(path: string, middleware: Middleware, handler: Handler): this;
   patch(path: string, ...handlers: (Handler | Middleware)[]): this {
     const { handler, middleware } = this.extractHandlerAndMiddleware(handlers);
     this.registerRoute("PATCH", path, middleware, handler);
@@ -372,37 +198,7 @@ export default class Ivy {
   }
 
   options(path: string, handler: Handler): this;
-  options(path: string, mw1: Middleware, handler: Handler): this;
-  options(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    handler: Handler,
-  ): this;
-  options(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    handler: Handler,
-  ): this;
-  options(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    handler: Handler,
-  ): this;
-  options(
-    path: string,
-    mw1: Middleware,
-    mw2: Middleware,
-    mw3: Middleware,
-    mw4: Middleware,
-    mw5: Middleware,
-    handler: Handler,
-  ): this;
+  options(path: string, middleware: Middleware, handler: Handler): this;
   options(path: string, ...handlers: (Handler | Middleware)[]): this {
     const { handler, middleware } = this.extractHandlerAndMiddleware(handlers);
     this.registerRoute("OPTIONS", path, middleware, handler);

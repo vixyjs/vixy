@@ -26,7 +26,7 @@ app.use("/v1/*", async (c, next) => {
 
 ### Route-specific Middleware
 
-You can also apply middleware to specific routes by passing them as additional arguments to the route registration methods.
+You can also apply middleware to specific routes by passing them as an additional argument to the route registration methods.
 
 ```ts
 const authMiddleware = async (c, next) => {
@@ -43,13 +43,7 @@ app.on("POST", "/protected", authMiddleware, (c) =>
 );
 ```
 
-in a route handler, you can have multiple middleware functions:
-
-```ts
-app.post("/submit", middleware1, middleware2, (c) => {
-  return c.json({ message: "Data submitted" });
-});
-```
+Each route supports exactly one middleware function. If you need multiple middleware, combine them using `app.use()` for global middleware or compose them into a single middleware function.
 
 ## Middleware Execution Order
 
@@ -81,6 +75,7 @@ app.get("/", (c) => {
 ```
 
 will result:
+
 ```
 middleware 1 start
   middleware 2 start

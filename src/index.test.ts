@@ -910,7 +910,11 @@ describe("Ivy", () => {
       });
       const response = await app.fetch(req);
 
-      const result = await response.json();
+      const result = (await response.json()) as {
+        json: { value: number };
+        textLength: number;
+        bufferLength: number;
+      };
       expect(result.json).toEqual({ value: 42 });
       expect(result.textLength).toBe(body.length);
       expect(result.bufferLength).toBe(body.length);

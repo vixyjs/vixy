@@ -1,5 +1,13 @@
 {
   "name": "ivy",
+  "version": "0.0.1",
+  "description": "A fast, modern, and extendible web framework",
+  "license": "MIT",
+  "author": "Hisam Fahri <iam@hisamafahri.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/hisamafahri/ivy.git"
+  },
   "module": "src/index.ts",
   "type": "module",
   "scripts": {

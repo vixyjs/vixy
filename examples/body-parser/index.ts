@@ -1,4 +1,4 @@
-import Ivy from "../../src/index.ts";
+import Ivy from "../../src";
 
 const app = new Ivy();
 

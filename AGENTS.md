@@ -137,7 +137,7 @@ constructor() {
 
 - Return appropriate HTTP status codes (404 for not found, etc.)
 - Use simple error responses for now (e.g., `new Response("Not Found", { status: 404 })`)
-- TODO items exist for `onNotFound` and `onError` handlers - implement when needed
+- On request hit a non-registered route, return `onNotFound` will be called if provided
 
 ### Method Chaining
 

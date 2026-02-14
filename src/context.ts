@@ -26,6 +26,8 @@ export interface IvyRequest {
   href: string;
   pathname: string;
   routePathname: string;
+  setContext: <T = any>(key: string, value: T) => void;
+  getContext: <T = any>(key: string) => T | undefined;
 }
 
 export interface CookieOptions {
@@ -51,13 +53,12 @@ export interface IvyResponse {
   redirect: (location: string, status?: RedirectStatusCode) => Response;
 }
 
-// TODO:
-// - set context state, that persists across middlewares/handlers in a SINGLE request context
 export class IvyContext {
   req: IvyRequest;
   res: IvyResponse;
   private bodyCache: ArrayBuffer | null = null;
   private customHeaders: Record<string, string> = {};
+  private contextStore: Record<string, any> = {};
 
   constructor(
     rawRequest: Request,
@@ -177,6 +178,12 @@ export class IvyContext {
       href: rawRequest.url,
       pathname: url.pathname,
       routePathname: routePathname,
+      setContext: <T = any>(key: string, value: T): void => {
+        this.contextStore[key] = value;
+      },
+      getContext: <T = any>(key: string): T | undefined => {
+        return this.contextStore[key] as T | undefined;
+      },
     };
 
     this.res = {

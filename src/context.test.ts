@@ -917,4 +917,406 @@ describe("IvyContext", () => {
       expect(await response.text()).toBe("");
     });
   });
+
+  describe("req.setContext() and req.getContext()", () => {
+    it("should set and get string values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("email", "test@example.com");
+
+      expect(ctx.req.getContext("email")).toBe("test@example.com");
+    });
+
+    it("should set and get number values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("userId", 123);
+
+      expect(ctx.req.getContext("userId")).toBe(123);
+    });
+
+    it("should set and get boolean values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("isAuthenticated", true);
+
+      expect(ctx.req.getContext("isAuthenticated")).toBe(true);
+    });
+
+    it("should set and get object values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const user = { id: 1, name: "John Doe", email: "john@example.com" };
+
+      ctx.req.setContext("user", user);
+
+      expect(ctx.req.getContext("user")).toEqual(user);
+    });
+
+    it("should set and get array values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const tags = ["tag1", "tag2", "tag3"];
+
+      ctx.req.setContext("tags", tags);
+
+      expect(ctx.req.getContext("tags")).toEqual(tags);
+    });
+
+    it("should set and get null values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("nullValue", null);
+
+      expect(ctx.req.getContext("nullValue")).toBeNull();
+    });
+
+    it("should set and get undefined values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("undefinedValue", undefined);
+
+      expect(ctx.req.getContext("undefinedValue")).toBeUndefined();
+    });
+
+    it("should return undefined for non-existent keys", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      expect(ctx.req.getContext("nonExistent")).toBeUndefined();
+    });
+
+    it("should overwrite existing values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("key", "first");
+      expect(ctx.req.getContext("key")).toBe("first");
+
+      ctx.req.setContext("key", "second");
+      expect(ctx.req.getContext("key")).toBe("second");
+    });
+
+    it("should handle multiple keys independently", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("key1", "value1");
+      ctx.req.setContext("key2", "value2");
+      ctx.req.setContext("key3", "value3");
+
+      expect(ctx.req.getContext("key1")).toBe("value1");
+      expect(ctx.req.getContext("key2")).toBe("value2");
+      expect(ctx.req.getContext("key3")).toBe("value3");
+    });
+
+    it("should work with typed generic parameter", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      interface User {
+        id: number;
+        name: string;
+      }
+
+      const user: User = { id: 1, name: "Alice" };
+      ctx.req.setContext<User>("user", user);
+
+      const retrieved = ctx.req.getContext<User>("user");
+      expect(retrieved).toEqual(user);
+      expect(retrieved?.id).toBe(1);
+      expect(retrieved?.name).toBe("Alice");
+    });
+
+    it("should not share context between different request contexts", () => {
+      const req1 = new Request("http://localhost/1");
+      const ctx1 = new IvyContext(req1);
+      ctx1.req.setContext("key", "value1");
+
+      const req2 = new Request("http://localhost/2");
+      const ctx2 = new IvyContext(req2);
+      ctx2.req.setContext("key", "value2");
+
+      expect(ctx1.req.getContext("key")).toBe("value1");
+      expect(ctx2.req.getContext("key")).toBe("value2");
+    });
+
+    it("should maintain context throughout request lifecycle", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      // Simulate middleware setting context
+      ctx.req.setContext("email", "test@example.com");
+      ctx.req.setContext("userId", 456);
+
+      // Simulate handler accessing context
+      const email = ctx.req.getContext<string>("email");
+      const userId = ctx.req.getContext<number>("userId");
+
+      expect(email).toBe("test@example.com");
+      expect(userId).toBe(456);
+    });
+
+    it("should handle complex nested objects", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      const complexData = {
+        user: {
+          id: 1,
+          profile: {
+            name: "John",
+            address: {
+              street: "123 Main St",
+              city: "New York",
+            },
+          },
+        },
+        permissions: ["read", "write"],
+      };
+
+      ctx.req.setContext("data", complexData);
+
+      const retrieved = ctx.req.getContext("data");
+      expect(retrieved).toEqual(complexData);
+      expect(retrieved.user.profile.address.city).toBe("New York");
+    });
+
+    it("should handle Date objects", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const now = new Date("2026-02-14T12:00:00Z");
+
+      ctx.req.setContext("timestamp", now);
+
+      const retrieved = ctx.req.getContext<Date>("timestamp");
+      expect(retrieved).toEqual(now);
+      expect(retrieved?.getTime()).toBe(now.getTime());
+    });
+
+    it("should handle Map objects", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const map = new Map([
+        ["key1", "value1"],
+        ["key2", "value2"],
+      ]);
+
+      ctx.req.setContext("map", map);
+
+      const retrieved = ctx.req.getContext<Map<string, string>>("map");
+      expect(retrieved).toEqual(map);
+      expect(retrieved?.get("key1")).toBe("value1");
+    });
+
+    it("should handle Set objects", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const set = new Set([1, 2, 3, 4, 5]);
+
+      ctx.req.setContext("set", set);
+
+      const retrieved = ctx.req.getContext<Set<number>>("set");
+      expect(retrieved).toEqual(set);
+      expect(retrieved?.has(3)).toBe(true);
+    });
+
+    it("should handle function values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const fn = (x: number) => x * 2;
+
+      ctx.req.setContext("fn", fn);
+
+      const retrieved = ctx.req.getContext<typeof fn>("fn");
+      expect(retrieved).toBe(fn);
+      expect(retrieved?.(5)).toBe(10);
+    });
+
+    it("should handle Symbol keys", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const symKey = "symbolKey";
+
+      ctx.req.setContext(symKey, "symbolValue");
+
+      expect(ctx.req.getContext(symKey)).toBe("symbolValue");
+    });
+
+    it("should allow storing and retrieving empty strings", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("emptyString", "");
+
+      expect(ctx.req.getContext("emptyString")).toBe("");
+    });
+
+    it("should allow storing and retrieving zero", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("zero", 0);
+
+      expect(ctx.req.getContext("zero")).toBe(0);
+    });
+
+    it("should allow storing and retrieving false", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("false", false);
+
+      expect(ctx.req.getContext("false")).toBe(false);
+    });
+
+    it("should handle rapid successive updates", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      for (let i = 0; i < 100; i++) {
+        ctx.req.setContext("counter", i);
+      }
+
+      expect(ctx.req.getContext("counter")).toBe(99);
+    });
+
+    it("should handle many different keys", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      for (let i = 0; i < 100; i++) {
+        ctx.req.setContext(`key${i}`, `value${i}`);
+      }
+
+      expect(ctx.req.getContext("key0")).toBe("value0");
+      expect(ctx.req.getContext("key50")).toBe("value50");
+      expect(ctx.req.getContext("key99")).toBe("value99");
+    });
+
+    it("should work with class instances", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      class TestClass {
+        constructor(public value: string) {}
+        getValue() {
+          return this.value;
+        }
+      }
+
+      const instance = new TestClass("test");
+      ctx.req.setContext("instance", instance);
+
+      const retrieved = ctx.req.getContext<TestClass>("instance");
+      expect(retrieved).toBe(instance);
+      expect(retrieved?.getValue()).toBe("test");
+    });
+
+    it("should handle Error objects", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const error = new Error("Test error");
+
+      ctx.req.setContext("error", error);
+
+      const retrieved = ctx.req.getContext<Error>("error");
+      expect(retrieved).toBe(error);
+      expect(retrieved?.message).toBe("Test error");
+    });
+
+    it("should handle regular expressions", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const regex = /test.*pattern/gi;
+
+      ctx.req.setContext("regex", regex);
+
+      const retrieved = ctx.req.getContext<RegExp>("regex");
+      expect(retrieved).toBe(regex);
+      expect(retrieved?.test("test some pattern")).toBe(true);
+    });
+
+    it("should handle Buffer objects", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const buffer = Buffer.from("Hello World");
+
+      ctx.req.setContext("buffer", buffer);
+
+      const retrieved = ctx.req.getContext<Buffer>("buffer");
+      expect(retrieved).toBe(buffer);
+      expect(retrieved?.toString()).toBe("Hello World");
+    });
+
+    it("should handle BigInt values", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const bigIntValue = BigInt(9007199254740991);
+
+      ctx.req.setContext("bigInt", bigIntValue);
+
+      const retrieved = ctx.req.getContext<bigint>("bigInt");
+      expect(retrieved).toBe(bigIntValue);
+    });
+
+    it("should preserve object references", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const obj = { mutable: true };
+
+      ctx.req.setContext("obj", obj);
+
+      const retrieved = ctx.req.getContext("obj");
+      expect(retrieved).toBe(obj);
+
+      // Mutating retrieved object should affect original
+      if (retrieved) {
+        retrieved.mutable = false;
+      }
+      expect(obj.mutable).toBe(false);
+    });
+
+    it("should work with keys containing special characters", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("key-with-dashes", "value1");
+      ctx.req.setContext("key.with.dots", "value2");
+      ctx.req.setContext("key:with:colons", "value3");
+      ctx.req.setContext("key with spaces", "value4");
+
+      expect(ctx.req.getContext("key-with-dashes")).toBe("value1");
+      expect(ctx.req.getContext("key.with.dots")).toBe("value2");
+      expect(ctx.req.getContext("key:with:colons")).toBe("value3");
+      expect(ctx.req.getContext("key with spaces")).toBe("value4");
+    });
+
+    it("should handle unicode keys", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.req.setContext("🔑", "emoji key");
+      ctx.req.setContext("日本語", "japanese");
+
+      expect(ctx.req.getContext("🔑")).toBe("emoji key");
+      expect(ctx.req.getContext("日本語")).toBe("japanese");
+    });
+
+    it("should handle very long strings", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+      const longString = "a".repeat(10000);
+
+      ctx.req.setContext("longString", longString);
+
+      expect(ctx.req.getContext("longString")).toBe(longString);
+      expect(ctx.req.getContext<string>("longString")?.length).toBe(10000);
+    });
+  });
 });

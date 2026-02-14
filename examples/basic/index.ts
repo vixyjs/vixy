@@ -2,8 +2,14 @@ import Ivy from "../../src/index";
 
 const app = new Ivy();
 
+app.use("*", async (c, next) => {
+  c.req.setContext("startTime", Date.now());
+  await next();
+});
+
 app.get("/", (c) => {
-  return c.res.text("Hello World!");
+  const startTime = c.req.getContext("startTime");
+  return c.res.text(`Start time: ${startTime}`);
 });
 
 app.get("/greet", (c) => {

@@ -1,6 +1,6 @@
 {
   "name": "vixy",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A fast, modern, and extendible web framework",
   "license": "MIT",
   "author": "Hisam Fahri <iam@hisamafahri.com>",

@@ -1,6 +1,7 @@
 import type {
   ContentfulStatusCode,
   ContentlessStatusCode,
+  RedirectStatusCode,
 } from "./lib/status-code";
 
 export interface IvyRequest {
@@ -40,7 +41,6 @@ export interface CookieOptions {
 export interface IvyResponse {
   // TODO:
   // - send file/blob
-  // - redirect
   // - send stream?
   header: (key: string, value: any) => void;
   cookie: (key: string, value: string, options?: CookieOptions) => void;
@@ -48,6 +48,7 @@ export interface IvyResponse {
   text: (content: string, status?: ContentfulStatusCode) => Response;
   html: (content: string, status?: ContentfulStatusCode) => Response;
   null: (status?: ContentlessStatusCode) => Response;
+  redirect: (location: string, status?: RedirectStatusCode) => Response;
 }
 
 // TODO:
@@ -237,6 +238,12 @@ export class IvyContext {
       },
       null: (status = 204): Response => {
         return new Response(null, { status, headers: this.customHeaders });
+      },
+      redirect: (location: string, status = 302): Response => {
+        return new Response(null, {
+          status,
+          headers: { Location: location, ...this.customHeaders },
+        });
       },
     };
   }

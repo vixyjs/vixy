@@ -63,4 +63,21 @@ app.get("/get-cookie", (c) => {
   });
 });
 
+// Redirect examples
+app.get("/old-page", (c) => {
+  return c.res.redirect("/new-page"); // 302 temporary redirect by default
+});
+
+app.get("/permanent-redirect", (c) => {
+  return c.res.redirect("/new-location", 301); // 301 permanent redirect
+});
+
+app.get("/new-page", (c) => {
+  return c.res.text("Welcome to the new page!");
+});
+
+app.get("/new-location", (c) => {
+  return c.res.text("This is the permanent location");
+});
+
 export default app;

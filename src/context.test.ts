@@ -835,4 +835,86 @@ describe("IvyContext", () => {
       );
     });
   });
+
+  describe("res.redirect()", () => {
+    it("should return redirect response with default status 302", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      const response = ctx.res.redirect("/new-location");
+
+      expect(response.status).toBe(302);
+      expect(response.headers.get("Location")).toBe("/new-location");
+    });
+
+    it("should return redirect response with custom status 301", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      const response = ctx.res.redirect("/permanent", 301);
+
+      expect(response.status).toBe(301);
+      expect(response.headers.get("Location")).toBe("/permanent");
+    });
+
+    it("should return redirect response with status 303", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      const response = ctx.res.redirect("/see-other", 303);
+
+      expect(response.status).toBe(303);
+      expect(response.headers.get("Location")).toBe("/see-other");
+    });
+
+    it("should return redirect response with status 307", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      const response = ctx.res.redirect("/temporary", 307);
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get("Location")).toBe("/temporary");
+    });
+
+    it("should return redirect response with status 308", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      const response = ctx.res.redirect("/permanent-redirect", 308);
+
+      expect(response.status).toBe(308);
+      expect(response.headers.get("Location")).toBe("/permanent-redirect");
+    });
+
+    it("should handle absolute URLs", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      const response = ctx.res.redirect("https://example.com/page");
+
+      expect(response.status).toBe(302);
+      expect(response.headers.get("Location")).toBe("https://example.com/page");
+    });
+
+    it("should include custom headers", () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      ctx.res.header("X-Custom-Header", "value");
+      const response = ctx.res.redirect("/new-location");
+
+      expect(response.headers.get("Location")).toBe("/new-location");
+      expect(response.headers.get("X-Custom-Header")).toBe("value");
+    });
+
+    it("should have no body", async () => {
+      const req = new Request("http://localhost/");
+      const ctx = new IvyContext(req);
+
+      const response = ctx.res.redirect("/new-location");
+
+      expect(await response.text()).toBe("");
+    });
+  });
 });

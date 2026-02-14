@@ -23,6 +23,25 @@
     "README.md",
     "LICENSE"
   ],
+  "keywords": [
+    "vixy",
+    "http",
+    "app",
+    "web-app",
+    "framework",
+    "api",
+    "router",
+    "middleware",
+    "typescript",
+    "bun",
+    "node",
+    "http",
+    "server"
+  ],
+  "bugs": {
+    "url": "https://github.com/hisamafahri/vixy/issues"
+  },
+  "homepage": "https://github.com/hisamafahri/vixy#readme",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "prepublishOnly": "bun run build",

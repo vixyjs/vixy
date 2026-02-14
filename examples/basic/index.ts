@@ -86,4 +86,6 @@ app.get("/new-location", (c) => {
   return c.res.text("This is the permanent location");
 });
 
+app.listen();
+
 export default app;

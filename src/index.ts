@@ -20,10 +20,17 @@ interface MiddlewareEntry {
   middleware: Middleware;
 }
 
+export interface ListenOptions {
+  port?: number;
+  hostname?: string;
+  onListening?: (info: { port: number; hostname: string }) => void;
+}
+
 export default class Vixy {
   private router: FindMyWay.Instance<FindMyWay.HTTPVersion.V1>;
   private notFoundHandler?: Handler;
   private globalMiddleware: MiddlewareEntry[] = [];
+  private server?: ReturnType<typeof Bun.serve>;
 
   constructor() {
     this.fetch = this.fetch.bind(this);
@@ -249,5 +256,27 @@ export default class Vixy {
     }
 
     return new Response("Not Found", { status: 404 });
+  }
+
+  listen(options: ListenOptions = {}): void {
+    const port = options.port ?? 8000;
+    const hostname = options.hostname ?? "localhost";
+
+    this.server = Bun.serve({
+      port,
+      hostname,
+      fetch: this.fetch,
+    });
+
+    if (options.onListening) {
+      options.onListening({ port, hostname });
+    }
+  }
+
+  stop(): void {
+    if (this.server) {
+      this.server.stop();
+      this.server = undefined;
+    }
   }
 }

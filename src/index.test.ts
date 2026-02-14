@@ -1223,4 +1223,145 @@ describe("Vixy", () => {
       }
     });
   });
+
+  describe("server management", () => {
+    const isBunRuntime = typeof Bun !== "undefined";
+
+    // Use unique ports to avoid conflicts between parallel tests
+    const testPorts = {
+      default: 9000,
+      custom: 9001,
+      customHost: 9002,
+      callback1: 9003,
+      callback2: 9004,
+      noCallback: 9005,
+      graceful: 9006,
+    };
+
+    it.skipIf(!isBunRuntime)(
+      "should start server with default port and hostname",
+      async () => {
+        const app = new Vixy();
+        app.get("/", (c) => c.res.text("Hello"));
+
+        app.listen({ port: testPorts.default });
+
+        const response = await fetch(`http://localhost:${testPorts.default}/`);
+        expect(response.status).toBe(200);
+        expect(await response.text()).toBe("Hello");
+
+        app.stop();
+      },
+    );
+
+    it.skipIf(!isBunRuntime)(
+      "should start server with custom port",
+      async () => {
+        const app = new Vixy();
+        app.get("/", (c) => c.res.text("Custom port"));
+
+        app.listen({ port: testPorts.custom });
+
+        const response = await fetch(`http://localhost:${testPorts.custom}/`);
+        expect(response.status).toBe(200);
+        expect(await response.text()).toBe("Custom port");
+
+        app.stop();
+      },
+    );
+
+    it.skipIf(!isBunRuntime)(
+      "should start server with custom hostname and port",
+      async () => {
+        const app = new Vixy();
+        app.get("/", (c) => c.res.text("Custom host"));
+
+        app.listen({ port: testPorts.customHost, hostname: "127.0.0.1" });
+
+        const response = await fetch(
+          `http://127.0.0.1:${testPorts.customHost}/`,
+        );
+        expect(response.status).toBe(200);
+        expect(await response.text()).toBe("Custom host");
+
+        app.stop();
+      },
+    );
+
+    it.skipIf(!isBunRuntime)(
+      "should call onListening callback with default port and hostname",
+      () => {
+        const app = new Vixy();
+        app.get("/", (c) => c.res.text("Hello"));
+
+        let callbackInfo: { port: number; hostname: string } | undefined;
+        app.listen({
+          port: testPorts.callback1,
+          onListening: (info) => {
+            callbackInfo = info;
+          },
+        });
+
+        expect(callbackInfo).toEqual({
+          port: testPorts.callback1,
+          hostname: "localhost",
+        });
+
+        app.stop();
+      },
+    );
+
+    it.skipIf(!isBunRuntime)(
+      "should call onListening callback with custom port and hostname",
+      () => {
+        const app = new Vixy();
+        app.get("/", (c) => c.res.text("Hello"));
+
+        let callbackInfo: { port: number; hostname: string } | undefined;
+        app.listen({
+          port: testPorts.callback2,
+          hostname: "127.0.0.1",
+          onListening: (info) => {
+            callbackInfo = info;
+          },
+        });
+
+        expect(callbackInfo).toEqual({
+          port: testPorts.callback2,
+          hostname: "127.0.0.1",
+        });
+
+        app.stop();
+      },
+    );
+
+    it.skipIf(!isBunRuntime)(
+      "should not call onListening callback if not provided",
+      () => {
+        const app = new Vixy();
+        app.get("/", (c) => c.res.text("Hello"));
+
+        // Should not throw even without onListening
+        app.listen({ port: testPorts.noCallback });
+
+        app.stop();
+      },
+    );
+
+    it.skipIf(!isBunRuntime)("should stop server gracefully", async () => {
+      const app = new Vixy();
+      app.get("/", (c) => c.res.text("Test"));
+
+      app.listen({ port: testPorts.graceful });
+
+      const response1 = await fetch(`http://localhost:${testPorts.graceful}/`);
+      expect(response1.status).toBe(200);
+
+      // Should stop without throwing
+      app.stop();
+
+      // Calling stop again should not throw
+      app.stop();
+    });
+  });
 });

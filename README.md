@@ -17,6 +17,22 @@ Vixy provides a simple and familiar routing API for building web applications on
 bun create vixy@latest
 ```
 
+## Quick Example
+
+```typescript
+import Vixy from "vixy";
+
+const app = new Vixy();
+
+app.get("/", (c) => {
+  return c.res.json({ message: "Hello, Vixy!" });
+});
+
+app.listen();
+```
+
+The app will be available at `http://localhost:8000` by default.
+
 ## Documentation
 
 For full documentation, visit [https://vixyjs.github.io/docs](https://vixyjs.github.io/docs)

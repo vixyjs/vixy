@@ -3,10 +3,10 @@
   "version": "0.1.1",
   "description": "A fast, modern, and extendible web framework",
   "license": "MIT",
-  "author": "Hisam Fahri <iam@hisamafahri.com>",
+  "author": "Hisam Fahri <iam@vixyjs.com>",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/hisamafahri/vixy.git"
+    "url": "git+ssh://git@github.com/vixyjs/vixy.git"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -38,13 +38,15 @@
     "server"
   ],
   "bugs": {
-    "url": "https://github.com/hisamafahri/vixy/issues"
+    "url": "https://github.com/vixyjs/vixy/issues"
   },
-  "homepage": "https://github.com/hisamafahri/vixy#readme",
+  "homepage": "https://github.com/vixyjs/vixy#readme",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "prepublishOnly": "bun run build",
-    "test": "vitest"
+    "test": "bun test",
+    "test:vitest": "vitest",
+    "test:bun": "bun test"
   },
   "devDependencies": {
     "@types/bun": "latest",

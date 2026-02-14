@@ -1364,4 +1364,141 @@ describe("Vixy", () => {
       app.stop();
     });
   });
+
+  describe("route grouping", () => {
+    it("should register routes from a group with prefix", async () => {
+      const app = new Vixy();
+      const controller = new Vixy();
+
+      controller.get("/users", (c) => c.res.text("users list"));
+
+      app.get("/", (c) => c.res.text("home"));
+      app.route("/v1", controller);
+
+      const homeReq = new Request("http://localhost/", { method: "GET" });
+      const homeRes = await app.fetch(homeReq);
+      expect(await homeRes.text()).toBe("home");
+
+      const usersReq = new Request("http://localhost/v1/users", {
+        method: "GET",
+      });
+      const usersRes = await app.fetch(usersReq);
+      expect(await usersRes.text()).toBe("users list");
+    });
+
+    it("should handle nested route groups", async () => {
+      const app = new Vixy();
+      const two = new Vixy();
+      const three = new Vixy();
+
+      three.get("/hi", (c) => c.res.text("hi"));
+      two.route("/three", three);
+      app.route("/two", two);
+
+      const req = new Request("http://localhost/two/three/hi", {
+        method: "GET",
+      });
+      const response = await app.fetch(req);
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("hi");
+    });
+
+    it("should handle multiple routes in a group", async () => {
+      const app = new Vixy();
+      const userController = new Vixy();
+
+      userController.get("/", (c) => c.res.text("list users"));
+      userController.get("/:id", (c) =>
+        c.res.text(`user ${c.req.param("id")}`),
+      );
+      userController.post("/", (c) => c.res.text("create user"));
+
+      app.route("/users", userController);
+
+      const listReq = new Request("http://localhost/users", { method: "GET" });
+      const listRes = await app.fetch(listReq);
+      expect(await listRes.text()).toBe("list users");
+
+      const getReq = new Request("http://localhost/users/123", {
+        method: "GET",
+      });
+      const getRes = await app.fetch(getReq);
+      expect(await getRes.text()).toBe("user 123");
+
+      const postReq = new Request("http://localhost/users", { method: "POST" });
+      const postRes = await app.fetch(postReq);
+      expect(await postRes.text()).toBe("create user");
+    });
+
+    it("should handle prefix with trailing slash", async () => {
+      const app = new Vixy();
+      const controller = new Vixy();
+
+      controller.get("/test", (c) => c.res.text("test response"));
+
+      app.route("/v1/", controller);
+
+      const req = new Request("http://localhost/v1/test", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("test response");
+    });
+
+    it("should propagate middleware from grouped routes", async () => {
+      const app = new Vixy();
+      const controller = new Vixy();
+
+      controller.use("*", async (c, next) => {
+        c.req.setContext("groupMiddleware", "executed");
+        await next();
+      });
+
+      controller.get("/test", (c) => {
+        const value = c.req.getContext("groupMiddleware");
+        return c.res.text(`middleware: ${value}`);
+      });
+
+      app.route("/api", controller);
+
+      const req = new Request("http://localhost/api/test", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(await response.text()).toBe("middleware: executed");
+    });
+
+    it("should support route-level middleware in grouped routes", async () => {
+      const app = new Vixy();
+      const controller = new Vixy();
+
+      const middleware = async (c: any, next: any) => {
+        c.req.setContext("middleware", "route-level");
+        await next();
+      };
+
+      controller.get("/test", middleware, (c) => {
+        const value = c.req.getContext("middleware");
+        return c.res.text(`middleware: ${value}`);
+      });
+
+      app.route("/api", controller);
+
+      const req = new Request("http://localhost/api/test", { method: "GET" });
+      const response = await app.fetch(req);
+
+      expect(await response.text()).toBe("middleware: route-level");
+    });
+
+    it("should return this for method chaining", () => {
+      const app = new Vixy();
+      const controller = new Vixy();
+
+      controller.get("/test", (c) => c.res.text("test"));
+
+      const result = app.route("/api", controller);
+
+      expect(result).toBe(app);
+    });
+  });
 });

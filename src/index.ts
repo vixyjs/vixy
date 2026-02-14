@@ -15,6 +15,13 @@ interface RouteStore {
   middleware: Middleware[];
 }
 
+interface RouteRegistryEntry {
+  method: Method;
+  path: string;
+  middleware: Middleware[];
+  handler: Handler;
+}
+
 interface MiddlewareEntry {
   path: string;
   middleware: Middleware;
@@ -31,6 +38,7 @@ export default class Vixy {
   private notFoundHandler?: Handler;
   private globalMiddleware: MiddlewareEntry[] = [];
   private server?: ReturnType<typeof Bun.serve>;
+  private routeRegistry: RouteRegistryEntry[] = [];
 
   constructor() {
     this.fetch = this.fetch.bind(this);
@@ -122,6 +130,14 @@ export default class Vixy {
       middleware,
     };
     this.router.on(method, convertedPath, () => {}, store);
+
+    // Add to route registry for later access
+    this.routeRegistry.push({
+      method,
+      path,
+      middleware,
+      handler,
+    });
   }
 
   // Helper type for middleware chain
@@ -209,6 +225,47 @@ export default class Vixy {
   options(path: string, ...handlers: (Handler | Middleware)[]): this {
     const { handler, middleware } = this.extractHandlerAndMiddleware(handlers);
     this.registerRoute("OPTIONS", path, middleware, handler);
+    return this;
+  }
+
+  route(prefix: string, group: Vixy): this {
+    // Normalize prefix - ensure it doesn't end with a slash
+    const normalizedPrefix = prefix.endsWith("/")
+      ? prefix.slice(0, -1)
+      : prefix;
+
+    // Register all routes from the group with the prefix
+    for (const entry of group.routeRegistry) {
+      // If the group route is "/", use just the prefix, otherwise concatenate
+      const prefixedPath =
+        entry.path === "/" ? normalizedPrefix : normalizedPrefix + entry.path;
+      this.registerRoute(
+        entry.method,
+        prefixedPath,
+        entry.middleware,
+        entry.handler,
+      );
+    }
+
+    // Register middleware from the group with the prefix
+    for (const middlewareEntry of group.globalMiddleware) {
+      let prefixedPath: string;
+
+      // Handle wildcard specially
+      if (middlewareEntry.path === "*") {
+        prefixedPath = normalizedPrefix + "/*";
+      } else if (middlewareEntry.path === "/") {
+        prefixedPath = normalizedPrefix;
+      } else {
+        prefixedPath = normalizedPrefix + middlewareEntry.path;
+      }
+
+      this.globalMiddleware.push({
+        path: prefixedPath,
+        middleware: middlewareEntry.middleware,
+      });
+    }
+
     return this;
   }
 

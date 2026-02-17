@@ -216,7 +216,7 @@ export class VixyContext {
         this.contextStore[key] = value;
       },
       getContext: <T = any>(key: string): T | undefined => {
-        return this.contextStore[key] as T | undefined;
+        return this.contextStore[key];
       },
     };
 
